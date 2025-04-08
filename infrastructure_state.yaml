@@ -1,0 +1,181 @@
+infrastructure:
+  vpc:
+    id: vpc-08d390de3486185ba
+    cidr_block: 10.0.0.0/16
+    region: us-west-2
+    dns_support: true
+    dns_hostnames: true
+    tags:
+      Application: data-lake
+      Environment: dev
+      Project: data-lake
+      Service: analytics
+      CostCenter: data-analytics
+      Owner: data-team
+      ManagedBy: terraform
+      Name: data-lake-vpc-dev
+
+  subnets:
+    private:
+      - id: subnet-0a3f2b1a5e8680871
+        availability_zone: us-west-2a
+        cidr_block: 10.0.0.0/20
+        tags:
+          Name: data-lake-private-subnet-1-dev
+          Environment: dev
+      - id: subnet-07a698e4c2dd2697f
+        availability_zone: us-west-2b
+        cidr_block: 10.0.16.0/20
+        tags:
+          Name: data-lake-private-subnet-2-dev
+          Environment: dev
+      - id: subnet-0bcd5af886699bb17
+        availability_zone: us-west-2c
+        cidr_block: 10.0.32.0/20
+        tags:
+          Name: data-lake-private-subnet-3-dev
+          Environment: dev
+    public:
+      - id: subnet-0a369f8a9d896d80c
+        availability_zone: us-west-2a
+        cidr_block: 10.0.48.0/20
+        tags:
+          Name: data-lake-public-subnet-1-dev
+          Environment: dev
+      - id: subnet-0f0878bbbe92add51
+        availability_zone: us-west-2b
+        cidr_block: 10.0.64.0/20
+        tags:
+          Name: data-lake-public-subnet-2-dev
+          Environment: dev
+      - id: subnet-0808e1fbccd99d6b5
+        availability_zone: us-west-2c
+        cidr_block: 10.0.80.0/20
+        tags:
+          Name: data-lake-public-subnet-3-dev
+          Environment: dev
+
+  route_tables:
+    public:
+      id: rtb-0c5dd32398153ae18
+      tags:
+        Name: data-lake-public-rt-dev
+        Environment: dev
+    private:
+      - id: rtb-06eae46c1188cf4b3
+        tags:
+          Name: data-lake-private-rt-1-dev
+          Environment: dev
+      - id: rtb-07572fd0a56ebd8de
+        tags:
+          Name: data-lake-private-rt-2-dev
+          Environment: dev
+      - id: rtb-05ae0c878aaeffaf6
+        tags:
+          Name: data-lake-private-rt-3-dev
+          Environment: dev
+
+  vpc_endpoints:
+    s3:
+      id: vpce-0ea8e2ecf91d05cb2
+      service_name: com.amazonaws.us-west-2.s3
+      vpc_endpoint_type: Gateway
+      state: available
+      tags:
+        Name: data-lake-s3-endpoint
+        Environment: dev
+
+  security_groups:
+    vpc_endpoints:
+      id: sg-0de37fe76303ac9a3
+      name: data-lake-vpc-endpoints-sg
+      description: Security group for VPC endpoints
+      ingress:
+        - from_port: 443
+          to_port: 443
+          protocol: tcp
+          cidr_blocks: [10.0.0.0/16]
+      tags:
+        Name: data-lake-vpc-endpoints-sg
+        Environment: dev
+
+  s3:
+    data_lake:
+      bucket_name: data-lake-data-lake-dev
+      arn: arn:aws:s3:::data-lake-data-lake-dev
+      versioning: enabled
+      server_side_encryption: AES256
+      tags:
+        Name: data-lake-bucket-dev
+        Environment: dev
+        Service: data-lake
+        ManagedBy: terraform
+
+  kinesis:
+    stream:
+      name: data-lake-stream-dev
+      arn: arn:aws:kinesis:us-west-2:156041437006:stream/data-lake-stream-dev
+      shard_count: 1
+      retention_period: 24
+      tags:
+        Name: data-lake-stream-dev
+        Environment: dev
+        Service: data-lake
+        ManagedBy: terraform
+    consumer:
+      name: data-lake-consumer-dev
+      arn: arn:aws:kinesis:us-west-2:156041437006:stream/data-lake-stream-dev/consumer/data-lake-consumer-dev
+      tags:
+        Name: data-lake-consumer-dev
+        Environment: dev
+        Service: data-lake
+        ManagedBy: terraform
+
+  glue:
+    database:
+      name: data-lake-database-dev
+      catalog_id: "156041437006"
+      description: "Data Lake Database for ETL Processing"
+      location_uri: s3://data-lake-data-lake-dev/glue/database/
+      tags:
+        Name: data-lake-database-dev
+        Environment: dev
+        Service: data-lake
+        ManagedBy: terraform
+    job:
+      name: data-lake-etl-job
+      role_arn: arn:aws:iam::156041437006:role/data-lake-glue-role-dev
+      worker_type: G.1X
+      number_of_workers: 2
+      timeout: 2880
+      max_retries: 0
+      tags:
+        Name: data-lake-etl-job
+        Environment: dev
+        Service: data-lake
+        ManagedBy: terraform
+
+  athena:
+    workgroup:
+      name: data-lake-workgroup-dev
+      state: ENABLED
+      output_location: s3://data-lake-data-lake-dev/athena/results/
+      enforce_workgroup_configuration: true
+      publish_cloudwatch_metrics_enabled: true
+      requester_pays_enabled: false
+      tags:
+        Name: data-lake-workgroup-dev
+        Environment: dev
+        Service: data-lake
+        ManagedBy: terraform
+    named_query:
+      name: data-lake-sample-query
+      workgroup: data-lake-workgroup-dev
+      description: "Sample query for data lake analysis"
+      database: data-lake-database-dev
+      query: "SELECT * FROM data_lake_database_dev.your_table LIMIT 10;"
+      tags:
+        Name: data-lake-sample-query
+        Environment: dev
+        Service: data-lake
+        ManagedBy: terraform 
